@@ -8,6 +8,7 @@ import json
 from kloppy.domain import (
     attacking_direction_from_frame,
     AttackingDirection,
+    BallState,
     DatasetFlag,
     Dimension,
     Frame,
@@ -63,10 +64,13 @@ class SkillCornerTrackingSerializer(TrackingDataSerializer):
 
         if ball_owning_team == "home team":
             ball_owning_team = teams[0]
+            ball_state = BallState.ALIVE
         elif ball_owning_team == "away team":
             ball_owning_team = teams[1]
+            ball_state = BallState.ALIVE
         else:
             ball_owning_team = None
+            ball_state = BallState.DEAD
 
         for frame_record in frame["data"]:
             # containing x, y, trackable_object, track_id, group_name
@@ -128,7 +132,7 @@ class SkillCornerTrackingSerializer(TrackingDataSerializer):
             ball_coordinates=ball_coordinates,
             players_data=players_data,
             period=periods[frame_period],
-            ball_state=None,
+            ball_state=ball_state,
             ball_owning_team=ball_owning_team,
             other_data={},
         )
