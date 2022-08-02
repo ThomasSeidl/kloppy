@@ -129,6 +129,26 @@ class CardType(Enum):
     SECOND_YELLOW = "SECOND_YELLOW"
     RED = "RED"
 
+class ControlResult(ResultType):
+    """
+    PassResult
+
+    Attributes:
+        COMPLETE (ControlResult): Successful Control
+        INCOMPLETE (ControlResult): UNsuccessful Control 
+        
+    """
+
+    COMPLETE = "COMPLETE"
+    INCOMPLETE = "INCOMPLETE"
+
+    @property
+    def is_success(self):
+        """
+        Returns if the pass was complete
+        """
+        return self == self.COMPLETE
+
 
 class EventType(Enum):
     """
@@ -160,6 +180,7 @@ class EventType(Enum):
     RECOVERY = "RECOVERY"
     BALL_OUT = "BALL_OUT"
     FOUL_COMMITTED = "FOUL_COMMITTED"
+    CONTROL = "CONTROL"
 
     def __repr__(self):
         return self.value
@@ -612,6 +633,19 @@ class FoulCommittedEvent(Event):
     event_type: EventType = EventType.FOUL_COMMITTED
     event_name: str = "foul_committed"
 
+@dataclass
+@docstring_inherit_attributes(Event)
+class ControlEvent(Event):
+    """
+    ControlEvent
+
+    Attributes:
+        event_type (EventType): `EventType.CONTROL` (See [`EventType`][kloppy.domain.models.event.EventType])
+        event_name (str): "control"
+    """
+
+    event_type: EventType = EventType.CONTROL
+    event_name: str = "control"
 
 @dataclass
 class EventDataset(Dataset):
@@ -636,6 +670,7 @@ class EventDataset(Dataset):
             PlayerOffEvent,
             PlayerOnEvent,
             CardEvent,
+            ControlEvent
         ]
     ]
 
@@ -687,4 +722,6 @@ __all__ = [
     "GoalkeeperAction",
     "GoalkeeperActionQualifier",
     "CounterAttackQualifier",
+    "ControlEvent",
+    "ControlResult"
 ]

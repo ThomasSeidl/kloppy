@@ -24,6 +24,7 @@ from kloppy.domain import (
     ShotResult,
     TakeOnResult,
     CarryResult,
+    ControlResult,
     EventType,
     Ground,
     Score,
@@ -46,6 +47,7 @@ from kloppy.domain import (
     BodyPart,
     PassType,
     PassQualifier,
+    ControlEvent
 )
 from kloppy.infra.serializers.event import EventDataSerializer
 from kloppy.utils import Readable, performance_logging
@@ -67,6 +69,7 @@ EVENT_TYPE_CORNER_AWARDED = 6
 EVENT_TYPE_FOUL_COMMITTED = 4
 EVENT_TYPE_CARD = 17
 EVENT_TYPE_RECOVERY = 49
+EVENT_TYPE_CONTROL = 82
 
 BALL_OUT_EVENTS = [EVENT_TYPE_BALL_OUT, EVENT_TYPE_CORNER_AWARDED]
 
@@ -79,6 +82,7 @@ BALL_OWNING_EVENTS = (
     EVENT_TYPE_SHOT_SAVED,
     EVENT_TYPE_SHOT_GOAL,
     EVENT_TYPE_RECOVERY,
+    EVENT_TYPE_CONTROL
 )
 
 EVENT_QUALIFIER_GOAL_KICK = 124
@@ -188,6 +192,7 @@ event_type_names = {
     75: "delayed start",
     76: "early end",
     77: "player off pitch",
+    82: "control"
 }
 
 
@@ -219,6 +224,19 @@ def _parse_pass(raw_qualifiers: Dict[int, str], outcome: int) -> Dict:
         receiver_coordinates=receiver_coordinates,
         receiver_player=None,
         receive_timestamp=None,
+        qualifiers=qualifiers,
+    )
+
+def _parse_control(raw_qualifiers: Dict[int, str], outcome: int) -> Dict:
+    if outcome:
+        result = ControlResult.COMPLETE
+    else:
+        result = ControlResult.INCOMPLETE
+
+    qualifiers = _get_event_qualifiers(raw_qualifiers)
+
+    return dict(
+        result=result,
         qualifiers=qualifiers,
     )
 
@@ -634,6 +652,13 @@ class OptaSerializer(EventDataSerializer):
                             **take_on_event_kwargs,
                             **generic_event_kwargs,
                         )
+                    elif type_id == EVENT_TYPE_CONTROL:
+                        control_event_kwargs = _parse_take_on(outcome)
+                        event = ControlEvent.create(
+                            qualifiers=None,
+                            **control_event_kwargs,
+                            **generic_event_kwargs,
+                        )
                     elif type_id in (
                         EVENT_TYPE_SHOT_MISS,
                         EVENT_TYPE_SHOT_POST,
@@ -688,6 +713,13 @@ class OptaSerializer(EventDataSerializer):
 
                         event = CardEvent.create(
                             **card_event_kwargs,
+                            **generic_event_kwargs,
+                        )
+
+                    elif type_id == EVENT_TYPE_CONTROL:
+                        event = ControlEvent.create(
+                            result=None,
+                            qualifiers=None,
                             **generic_event_kwargs,
                         )
 
